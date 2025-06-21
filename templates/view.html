@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Page.Title}} - Monopage</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            line-height: 1.6;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .meta {
+            color: #666;
+            font-size: 14px;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .content h1, .content h2, .content h3 {
+            color: #333;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        .content p {
+            margin-bottom: 15px;
+        }
+        .content code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+        }
+        .content pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .content blockquote {
+            border-left: 4px solid #ddd;
+            margin: 20px 0;
+            padding-left: 20px;
+            color: #666;
+        }
+        .actions {
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .edit-link {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        .edit-link:hover {
+            background-color: #545b62;
+        }
+        .create-link {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .create-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{.Page.Title}}</h1>
+            <div class="meta">
+                Created {{.Page.CreatedAt.Format "January 2, 2006"}}
+                {{if ne .Page.CreatedAt.Format "2006-01-02" .Page.UpdatedAt.Format "2006-01-02"}}
+                    • Updated {{.Page.UpdatedAt.Format "January 2, 2006"}}
+                {{end}}
+            </div>
+        </div>
+        
+        <div class="content">
+            {{.RenderedContent}}
+        </div>
+        
+        <div class="actions">
+            {{if .CanEdit}}
+                <a href="/{{.Page.Slug}}_edit" class="edit-link">Edit</a>
+            {{end}}
+            <a href="/" class="create-link">Create new page</a>
+        </div>
+    </div>
+</body>
+</html>
