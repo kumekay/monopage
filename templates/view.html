@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Page.Title}} - Monopage</title>
+    <title>Monopage</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -27,10 +27,6 @@
         .header h1 {
             margin: 0 0 10px 0;
             color: #333;
-        }
-        .meta {
-            color: #666;
-            font-size: 14px;
         }
         .content {
             margin-bottom: 30px;
@@ -78,26 +74,12 @@
         .edit-link:hover {
             background-color: #545b62;
         }
-        .create-link {
-            color: #007bff;
-            text-decoration: none;
-            font-size: 14px;
-        }
-        .create-link:hover {
-            text-decoration: underline;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>{{.Page.Title}}</h1>
-            <div class="meta">
-                Created {{.Page.CreatedAt.Format "January 2, 2006"}}
-                {{if ne .Page.CreatedAt.Format "2006-01-02" .Page.UpdatedAt.Format "2006-01-02"}}
-                    • Updated {{.Page.UpdatedAt.Format "January 2, 2006"}}
-                {{end}}
-            </div>
+            <h1>Monopage</h1>
         </div>
         
         <div class="content">
@@ -105,10 +87,7 @@
         </div>
         
         <div class="actions">
-            {{if .CanEdit}}
-                <a href="/{{.Page.Slug}}_edit" class="edit-link">Edit</a>
-            {{end}}
-            <a href="/" class="create-link">Create new page</a>
+            <a href="/edit" class="edit-link">Edit</a>
         </div>
     </div>
 </body>

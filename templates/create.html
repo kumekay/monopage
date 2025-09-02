@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Page - Monopage</title>
+    <title>Create Page - Monopage</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -31,13 +31,15 @@
             font-weight: 500;
             color: #555;
         }
-        textarea {
+        input[type="text"], textarea {
             width: 100%;
             padding: 12px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 16px;
             box-sizing: border-box;
+        }
+        textarea {
             height: 300px;
             resize: vertical;
             font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
@@ -51,19 +53,9 @@
             font-size: 16px;
             cursor: pointer;
             transition: background-color 0.2s;
-            margin-right: 10px;
         }
         button:hover {
             background-color: #218838;
-        }
-        .cancel-link {
-            color: #6c757d;
-            text-decoration: none;
-            padding: 12px 24px;
-            font-size: 16px;
-        }
-        .cancel-link:hover {
-            text-decoration: underline;
         }
         .help-text {
             font-size: 14px;
@@ -74,16 +66,20 @@
 </head>
 <body>
     <div class="container">
-        <h1>Edit Page</h1>
+        <h1>Create Page</h1>
         <form method="POST">
             <div class="form-group">
+                <label for="title">Title</label>
+                <input type="text" id="title" name="title" required>
+            </div>
+            
+            <div class="form-group">
                 <label for="content">Content</label>
-                <textarea id="content" name="content" required>{{.Content}}</textarea>
+                <textarea id="content" name="content" required></textarea>
                 <div class="help-text">You can use Markdown formatting</div>
             </div>
             
-            <button type="submit">Save Changes</button>
-            <a href="/" class="cancel-link">Cancel</a>
+            <button type="submit">Create Page</button>
         </form>
     </div>
 </body>

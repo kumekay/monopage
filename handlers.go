@@ -4,151 +4,111 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"strings"
-
-	"github.com/gorilla/mux"
 )
 
-func createPageHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		tmpl, err := template.ParseFiles("templates/create.html")
-		if err != nil {
-			http.Error(w, "Template error", http.StatusInternalServerError)
-			log.Printf("Template error: %v", err)
-			return
-		}
-		tmpl.Execute(w, nil)
-		
-	case "POST":
-		if err := r.ParseForm(); err != nil {
-			http.Error(w, "Failed to parse form", http.StatusBadRequest)
-			return
-		}
-		
-		title := strings.TrimSpace(r.FormValue("title"))
-		content := strings.TrimSpace(r.FormValue("content"))
-		
-		if title == "" || content == "" {
-			http.Error(w, "Title and content are required", http.StatusBadRequest)
-			return
-		}
-		
-		slug := generateSlug(title)
-		editToken := generateEditToken()
-		
-		page, err := createPage(title, content, slug, editToken)
-		if err != nil {
-			http.Error(w, "Failed to create page", http.StatusInternalServerError)
-			log.Printf("Failed to create page: %v", err)
-			return
-		}
-		
-		http.SetCookie(w, &http.Cookie{
-			Name:     "edit_token_" + slug,
-			Value:    editToken,
-			Path:     "/",
-			HttpOnly: true,
-			MaxAge:   86400 * 365,
-		})
-		
-		http.Redirect(w, r, "/"+page.Slug, http.StatusSeeOther)
-	}
-}
-
 func viewPageHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	slug := vars["slug"]
-	
-	page, err := getPageBySlug(slug)
-	if err != nil {
-		http.NotFound(w, r)
-		return
+	// Get the file path from environment variable or use default
+	filePath := os.Getenv("FILE_PATH")
+	if filePath == "" {
+		filePath = "page/the_page.md"
 	}
-	
-	renderedContent, err := renderMarkdown(page.Content)
+
+	// Read the markdown file content
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		// If file doesn't exist, show empty page
+		content = []byte("# Welcome to Monopage\n\nThis is a radically minimalistic CMS. Edit this page to add your content.")
+	}
+
+	// Convert markdown to HTML
+	renderedContent, err := renderMarkdown(string(content))
 	if err != nil {
 		http.Error(w, "Failed to render content", http.StatusInternalServerError)
 		log.Printf("Failed to render markdown: %v", err)
 		return
 	}
-	
+
+	// Create data structure for template
 	data := struct {
-		Page            *Page
+		Title           string
 		RenderedContent template.HTML
-		CanEdit         bool
 	}{
-		Page:            page,
+		Title:           "Monopage",
 		RenderedContent: template.HTML(renderedContent),
-		CanEdit:         canEditPage(r, page),
 	}
-	
+
+	// Parse and execute view template
 	tmpl, err := template.ParseFiles("templates/view.html")
 	if err != nil {
 		http.Error(w, "Template error", http.StatusInternalServerError)
 		log.Printf("Template error: %v", err)
 		return
 	}
-	
+
 	tmpl.Execute(w, data)
 }
 
 func editPageHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	fullSlug := vars["slug"]
-	slug := strings.TrimSuffix(fullSlug, "_edit")
-	
-	page, err := getPageBySlug(slug)
-	if err != nil {
-		http.NotFound(w, r)
-		return
+	// Get the file path from environment variable or use default
+	filePath := os.Getenv("FILE_PATH")
+	if filePath == "" {
+		filePath = "page/the_page.md"
 	}
-	
+
 	switch r.Method {
 	case "GET":
-		data := struct {
-			Page *Page
-		}{
-			Page: page,
+		// Read the current content of the markdown file
+		content, err := os.ReadFile(filePath)
+		if err != nil {
+			// If file doesn't exist, start with empty content
+			content = []byte("")
 		}
-		
+
+		// Create data structure for template
+		data := struct {
+			Content string
+		}{
+			Content: string(content),
+		}
+
+		// Parse and execute edit template
 		tmpl, err := template.ParseFiles("templates/edit.html")
 		if err != nil {
 			http.Error(w, "Template error", http.StatusInternalServerError)
 			log.Printf("Template error: %v", err)
 			return
 		}
-		
+
 		tmpl.Execute(w, data)
-		
+
 	case "POST":
+		// Parse form data
 		if err := r.ParseForm(); err != nil {
 			http.Error(w, "Failed to parse form", http.StatusBadRequest)
 			return
 		}
-		
-		title := strings.TrimSpace(r.FormValue("title"))
-		content := strings.TrimSpace(r.FormValue("content"))
-		
-		if title == "" || content == "" {
-			http.Error(w, "Title and content are required", http.StatusBadRequest)
-			return
-		}
-		
-		if err := updatePage(slug, title, content); err != nil {
-			http.Error(w, "Failed to update page", http.StatusInternalServerError)
-			log.Printf("Failed to update page: %v", err)
-			return
-		}
-		
-		http.Redirect(w, r, "/"+slug, http.StatusSeeOther)
-	}
-}
 
-func canEditPage(r *http.Request, page *Page) bool {
-	cookie, err := r.Cookie("edit_token_" + page.Slug)
-	if err != nil {
-		return false
+		// Get content from form
+		content := strings.TrimSpace(r.FormValue("content"))
+
+		// Ensure directory exists
+		dir := filePath[:strings.LastIndex(filePath, "/")]
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			http.Error(w, "Failed to create directory", http.StatusInternalServerError)
+			log.Printf("Failed to create directory: %v", err)
+			return
+		}
+
+		// Write content to file
+		if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+			http.Error(w, "Failed to save page", http.StatusInternalServerError)
+			log.Printf("Failed to save page: %v", err)
+			return
+		}
+
+		// Redirect to view page
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
-	return cookie.Value == page.EditToken
 }

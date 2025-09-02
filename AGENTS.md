@@ -15,9 +15,10 @@ The project is designed to be run behind a reverse proxy like nginx or traefik, 
 ### Architecture
 
 - **main.go**: HTTP server setup with Gorilla Mux routing
-- **handlers.go**: HTTP handlers
-- **templates/**: HTML templates for create, view, and edit pages
+- **handlers.go**: HTTP handlers for view and edit endpoints
+- **templates/**: HTML templates for view and edit pages
 - **static/**: Directory for static assets (CSS, JS, images)
+- **page/**: Directory for the markdown page content
 
 ### Key Dependencies
 
@@ -65,6 +66,7 @@ docker run -p 8080:8080 monopage
 
 ### Environment Variables
 
+- `HOST`: Server host (default: `0.0.0.0`)
 - `PORT`: Server port (default: 8080)
 - `FILE_PATH`: Path to the markdown file (default: `page/the_page.md`)
 
