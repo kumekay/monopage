@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Page - Monopage</title>
+    <link rel="stylesheet" href="/static/lib/codemirror.css">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -31,16 +32,11 @@
             font-weight: 500;
             color: #555;
         }
-        textarea {
-            width: 100%;
-            padding: 12px;
+        .CodeMirror {
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 16px;
-            box-sizing: border-box;
             height: 300px;
-            resize: vertical;
-            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
         }
         button {
             background-color: #28a745;
@@ -86,5 +82,16 @@
             <a href="/" class="cancel-link">Cancel</a>
         </form>
     </div>
+    
+    <script src="/static/lib/codemirror.js"></script>
+    <script src="/static/mode/markdown/markdown.js"></script>
+    <script>
+        var editor = CodeMirror.fromTextArea(document.getElementById("content"), {
+            mode: "markdown",
+            lineNumbers: true,
+            theme: "default",
+            extraKeys: {"Enter": "newlineAndIndentContinueMarkdownList"}
+        });
+    </script>
 </body>
 </html>
