@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ RUN go build -o monopage .
 FROM alpine:latest
 
 RUN apk --no-cache add ca-certificates
-WORKDIR /root/
+WORKDIR /app/
 
 COPY --from=builder /app/monopage .
 COPY --from=builder /app/templates ./templates/
