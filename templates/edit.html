@@ -71,18 +71,18 @@
 <body>
     <div class="container">
         <h1>Edit Page</h1>
-        <form method="POST">
+        <form method="post">
             <div class="form-group">
                 <label for="content">Content</label>
-                <textarea id="content" name="content" required>{{.Content}}</textarea>
+                <textarea id="content" name="content">{{.Content}}</textarea>
                 <div class="help-text">You can use Markdown formatting</div>
             </div>
-            
+
             <button type="submit">Save Changes</button>
             <a href="/" class="cancel-link">Cancel</a>
         </form>
     </div>
-    
+
     <script src="/static/lib/codemirror.js"></script>
     <script src="/static/mode/markdown/markdown.js"></script>
     <script>
