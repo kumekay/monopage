@@ -1,0 +1,97 @@
+services:
+  traefik:
+    image: traefik:v3
+    restart: unless-stopped
+    networks:
+      - "web"
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.web-secure.address=:443
+      - --certificatesresolvers.le.acme.email=${ACME_EMAIL?}
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.le.acme.tlschallenge=true
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./letsencrypt:/letsencrypt
+
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:latest
+    restart: unless-stopped
+    networks:
+      - "web"
+    depends_on:
+      - monopage
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=web
+
+      # --- Router so /oauth2/* on the SAME host reaches oauth2-proxy
+      - traefik.http.routers.oauth2.rule=Host(`${APP_DOMAIN?}`) && PathPrefix(`/oauth2`)
+      - traefik.http.routers.oauth2.entrypoints=web-secure
+      - traefik.http.routers.oauth2.tls.certresolver=le
+      - traefik.http.routers.oauth2.service=oauth2@docker
+      - traefik.http.services.oauth2.loadbalancer.server.port=4180
+
+      # ForwardAuth to oauth2-proxy
+      - traefik.http.middlewares.auth.forwardauth.address=https://${APP_DOMAIN?}/oauth2/auth
+      - traefik.http.middlewares.auth.forwardauth.trustForwardHeader=true
+
+      # oauth-error middleware — convert 401/403 to redirect to /oauth2/start
+      - traefik.http.middlewares.oauth-error.errors.status=401
+      - traefik.http.middlewares.oauth-error.errors.service=oauth2@docker
+      - traefik.http.middlewares.oauth-error.errors.query=/oauth2/sign_in?rd={url}
+
+    command:
+      - --provider=github
+      - --github-user=${GITHUB_USER?}
+
+      - --reverse-proxy
+      - --upstream=file:///dev/null
+      - --http-address=0.0.0.0:4180
+
+      # --- Cookies
+      - --cookie-secret=${COOKIE_SECRET?}
+      - --cookie-secure=true
+      - --cookie-domain=.${APP_DOMAIN?}
+      - --cookie-samesite=lax
+
+      - --whitelist-domain=.${APP_DOMAIN?}
+      - --email-domain=${EMAIL_DOMAIN:-*}
+
+      # --- UX & headers to upstream
+      - --set-authorization-header
+      - --set-xauthrequest=true
+    environment:
+      - OAUTH2_PROXY_CLIENT_ID=${GITHUB_CLIENT_ID?}
+      - OAUTH2_PROXY_CLIENT_SECRET=${GITHUB_CLIENT_SECRET?}
+
+  monopage:
+    image: kumekay/monopage:latest
+    restart: unless-stopped
+    expose:
+      - "8080"
+    networks:
+      - "web"
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=web
+
+      # --- Router for your app
+      - traefik.http.routers.monopage.rule=Host(`${APP_DOMAIN?}`)
+      - traefik.http.routers.monopage.entrypoints=web-secure
+      - traefik.http.routers.monopage.tls.certresolver=le
+
+      # --- Apply ForwardAuth and oauth-error (errors -> redirect)
+      - traefik.http.routers.monopage.middlewares=oauth-error@docker,auth@docker
+
+    volumes: [/opt/monopage/:/app/page]
+
+networks:
+  web:
